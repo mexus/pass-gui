@@ -238,6 +238,10 @@ void MainWindow::ChangeStoragePath() {
   if (!new_path.exists()) {
     return;
   }
+  if (new_path.path() == ".") {
+    // Probably "Cancel" has been hit.
+    return;
+  }
   passwords_path_ = new_path.absolutePath();
   ReloadTree();
 }
