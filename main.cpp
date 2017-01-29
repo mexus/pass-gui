@@ -8,7 +8,10 @@ int main(int argc, char *argv[]) {
   QCoreApplication::setApplicationName("Pass-GUI");
 
   MainWindow w;
-  w.show();
+
+  if (a.arguments().indexOf("--tray") == -1) {
+    w.show();
+  }
 
   return a.exec();
 }
