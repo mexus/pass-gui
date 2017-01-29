@@ -22,8 +22,6 @@ class MainWindow : public QMainWindow {
   ~MainWindow();
 
  private:
-  static const QString kPasswordsPath;
-
   /// Qt-generated UI objects.
   Ui::MainWindow *ui;
 
@@ -38,6 +36,9 @@ class MainWindow : public QMainWindow {
 
   /// A "quit" action.
   QAction *quit_action_;
+
+  /// Path of a passwords storage.
+  QString passwords_path_;
 
   /// Apply the current filter string to the password tree.
   void UpdateFiltering(const QString &filter);
@@ -80,6 +81,9 @@ class MainWindow : public QMainWindow {
   /// Reloads passwords tree. In case of failure the loaded tree remains the
   /// same.
   void ReloadTree();
+
+  /// Asks a user to give a new password storage path.
+  void ChangeStoragePath();
 };
 
 #endif  // MAINWINDOW_H

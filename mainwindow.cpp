@@ -3,8 +3,10 @@
 
 #include <thread>
 
+#include <QFileDialog>
 #include <QKeyEvent>
 #include <QMessageBox>
+#include <QSettings>
 
 #if defined(_WIN64) || defined(_WIN32)
 #include <Windows.h>
@@ -13,6 +15,8 @@
 #include "windows-keyboard.h"
 
 enum HotKeyId : int { kBringUp = 0xE3 };
+
+static const QString kSettingsFieldPasswordsPath = "passwords_path";
 
 static void OverwriteQString(QString *str) {
   int size = str->size();
@@ -25,8 +29,6 @@ static void OverwriteQString(QString *str) {
 #endif
 }
 
-const QString MainWindow::kPasswordsPath = "C:/Users/mexus/.password-store";
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::MainWindow),
@@ -35,6 +37,9 @@ MainWindow::MainWindow(QWidget *parent)
       systray_icon_(new QSystemTrayIcon(QIcon(":/gui/lock-logo.svg"), this)),
       quit_action_(new QAction("Quit", this)) {
   ui->setupUi(this);
+
+  QSettings settings;
+  passwords_path_ = settings.value(kSettingsFieldPasswordsPath).toString();
 
   // Removing a "Maximize" button.
   setWindowFlags(Qt::Window | Qt::WindowMinimizeButtonHint |
@@ -49,6 +54,8 @@ MainWindow::MainWindow(QWidget *parent)
   connect(quit_action_, &QAction::triggered, this, &MainWindow::close);
   connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
   connect(ui->actionReload, &QAction::triggered, this, &MainWindow::ReloadTree);
+  connect(ui->action_path_select, &QAction::triggered, this,
+          &MainWindow::ChangeStoragePath);
 
   // Handle key events for components:
   ui->filter_line->installEventFilter(this);
@@ -90,7 +97,11 @@ void MainWindow::Activate() {
   ui->filter_line->setFocus();
 }
 
-MainWindow::~MainWindow() { delete ui; }
+MainWindow::~MainWindow() {
+  delete ui;
+  QSettings settings;
+  settings.setValue(kSettingsFieldPasswordsPath, passwords_path_);
+}
 
 void MainWindow::UpdateFiltering(const QString &filter) {
   ui->results_list->clear();
@@ -206,13 +217,29 @@ bool MainWindow::SureToExit() {
 }
 
 void MainWindow::ReloadTree() {
+  if (passwords_path_.isEmpty()) {
+    QMessageBox::information(this, "No storage path",
+                             "Please select a password storage path.");
+    return;
+  }
   try {
-    PassStorage new_storage(kPasswordsPath);
+    PassStorage new_storage(passwords_path_);
     pass_storage_ = std::move(new_storage);
     UpdateFiltering(ui->filter_line->text());
   } catch (const std::exception &e) {
     QMessageBox::warning(this, "Can't load the passwords tree:\n", e.what());
   }
+}
+
+void MainWindow::ChangeStoragePath() {
+  QDir new_path = QFileDialog::getExistingDirectory(
+      this, "Passwords storage directory", passwords_path_,
+      QFileDialog::ShowDirsOnly);
+  if (!new_path.exists()) {
+    return;
+  }
+  passwords_path_ = new_path.absolutePath();
+  ReloadTree();
 }
 
 void MainWindow::TypeCurrentPassword() {
