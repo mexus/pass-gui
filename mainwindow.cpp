@@ -97,11 +97,7 @@ void MainWindow::Activate() {
   ui->filter_line->setFocus();
 }
 
-MainWindow::~MainWindow() {
-  delete ui;
-  QSettings settings;
-  settings.setValue(kSettingsFieldPasswordsPath, passwords_path_);
-}
+MainWindow::~MainWindow() { delete ui; }
 
 void MainWindow::UpdateFiltering(const QString &filter) {
   ui->results_list->clear();
@@ -216,18 +212,20 @@ bool MainWindow::SureToExit() {
   return reply == QMessageBox::Yes;
 }
 
-void MainWindow::ReloadTree() {
+int MainWindow::ReloadTree() {
   if (passwords_path_.isEmpty()) {
     QMessageBox::information(this, "No storage path",
                              "Please select a password storage path.");
-    return;
+    return -1;
   }
   try {
     PassStorage new_storage(passwords_path_);
     pass_storage_ = std::move(new_storage);
     UpdateFiltering(ui->filter_line->text());
+    return 0;
   } catch (const std::exception &e) {
     QMessageBox::warning(this, "Can't load the passwords tree:\n", e.what());
+    return -1;
   }
 }
 
@@ -242,8 +240,12 @@ void MainWindow::ChangeStoragePath() {
     // Probably "Cancel" has been hit.
     return;
   }
+  if (!ReloadTree()) {
+    return;
+  }
   passwords_path_ = new_path.absolutePath();
-  ReloadTree();
+  QSettings settings;
+  settings.setValue(kSettingsFieldPasswordsPath, passwords_path_);
 }
 
 void MainWindow::TypeCurrentPassword() {

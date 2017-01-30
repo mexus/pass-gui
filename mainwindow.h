@@ -80,7 +80,8 @@ class MainWindow : public QMainWindow {
 
   /// Reloads passwords tree. In case of failure the loaded tree remains the
   /// same.
-  void ReloadTree();
+  /// \return On success, returns 0, otherwise returns -1.
+  int ReloadTree();
 
   /// Asks a user to give a new password storage path.
   void ChangeStoragePath();
