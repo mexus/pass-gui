@@ -12,6 +12,7 @@
 #include <Windows.h>
 #endif
 
+#include "wait-dialog.h"
 #include "windows-keyboard.h"
 
 enum HotKeyId : int { kBringUp = 0xE3 };
@@ -265,7 +266,10 @@ void MainWindow::TypeCurrentPassword() {
 
   QString password;
   try {
+    WaitDialog dialog(this, "Waiting for GPG");
+    dialog.open();
     password = GpgDecryptFileFirstLine(file_name);
+    dialog.close();
     hide();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     keyboard_->TypeString(password);

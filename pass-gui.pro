@@ -11,14 +11,16 @@ SOURCES +=  main.cpp\
             mainwindow.cpp \
             pass-storage.cpp \
             windows-keyboard.cpp \
-            encryptiongpg.cpp
+            encryptiongpg.cpp \
+            wait-dialog.cpp
 
 HEADERS +=  mainwindow.h \
             pass-storage.h \
             encryptiongpg.h \
             keyboard-interface.h \
             windows-keyboard.h \
-            hotkey-setter.h
+            hotkey-setter.h \
+            wait-dialog.h
 
 FORMS += mainwindow.ui
 
