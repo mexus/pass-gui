@@ -29,7 +29,7 @@ class GpgDecryptionError : public GpgDecryptionResult {
 
 class GpgDecryptionSuccess : public GpgDecryptionResult {
  public:
-  GpgDecryptionSuccess(const QString &name, const QString &result);
+  GpgDecryptionSuccess(const QString &name, QString &&result);
 
   const QString &GetResult() const;
 

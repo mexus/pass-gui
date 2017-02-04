@@ -20,8 +20,8 @@ GpgDecryptionError::GpgDecryptionError(const QString &name,
 QString GpgDecryptionError::GetError() const { return error_; }
 
 GpgDecryptionSuccess::GpgDecryptionSuccess(const QString &name,
-                                           const QString &result)
-    : GpgDecryptionResult(name), result_(result) {}
+                                           QString &&result)
+    : GpgDecryptionResult(name), result_(std::move(result)) {}
 
 const QString &GpgDecryptionSuccess::GetResult() const { return result_; }
 
@@ -47,6 +47,6 @@ std::shared_ptr<GpgDecryptionResult> GpgDecryptFileFirstLine(
                   QString::number(exit_code) + "), error message:\n" +
                   QString::fromUtf8(gpg.readAllStandardError()));
   }
-  QByteArray output = gpg.readLine();
-  return std::make_shared<GpgDecryptionSuccess>(name, output);
+  QString output = gpg.readLine();
+  return std::make_shared<GpgDecryptionSuccess>(name, std::move(output));
 }
