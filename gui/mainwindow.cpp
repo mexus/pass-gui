@@ -9,15 +9,7 @@
 #include <QSettings>
 #include <QtConcurrent>
 
-#if defined(_WIN64) || defined(_WIN32)
-#include <Windows.h>
-#endif
-
-#include <lib/win/windows-keyboard.h>
-
-enum HotKeyId : int {
-  kBringUp = 0xE3,
-};
+#include <lib/hotkey-setter.h>
 
 static const QString kSettingsFieldPasswordsPath = "passwords_path";
 
@@ -25,9 +17,9 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::MainWindow),
       pass_storage_(),
-      keyboard_(new WindowsKeyboard()),
       systray_icon_(new QSystemTrayIcon(QIcon(":/gui/lock-logo.svg"), this)),
       quit_action_(new QAction("Quit", this)),
+      hotkey_setter_(this),
       wait_dialog_(new WaitDialog(this)) {
   ui->setupUi(this);
 
@@ -63,10 +55,7 @@ MainWindow::MainWindow(QWidget *parent)
 
   ReloadTree();
 
-#if defined(_WIN64) || defined(_WIN32)
-  RegisterHotKey(reinterpret_cast<HWND>(MainWindow::winId()),
-                 HotKeyId::kBringUp, MOD_ALT | MOD_NOREPEAT, VK_F3);
-#endif
+  hotkey_setter_.SetHotkey();
 }
 
 void MainWindow::ActivateOnTray(QSystemTrayIcon::ActivationReason reason) {
@@ -177,12 +166,9 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
 
 bool MainWindow::nativeEvent(const QByteArray & /*eventType*/, void *message,
                              long * /*result*/) {
-#if defined(_WIN64) || defined(_WIN32)
-  MSG *msg = reinterpret_cast<MSG *>(message);
-  if (msg->message == WM_HOTKEY && msg->wParam == HotKeyId::kBringUp) {
+  if (hotkey_setter_.CheckHotkey(message)) {
     Activate();
   }
-#endif
   return false;
 }
 
@@ -288,7 +274,7 @@ void MainWindow::TypePassword() {
   }
   hide();
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
-  keyboard_->TypeString(success->GetResult());
+  keyboard_.TypeString(success->GetResult());
   systray_icon_->showMessage("Password typed", name);
   success->ClearResult();
 }

@@ -10,7 +10,8 @@
 
 #include <gui/wait-dialog.h>
 #include <lib/encryptiongpg.h>
-#include <lib/keyboard-interface.h>
+#include <lib/hotkey-setter.h>
+#include <lib/keyboard-typing.h>
 #include <lib/pass-storage.h>
 
 namespace Ui {
@@ -32,7 +33,7 @@ class MainWindow : public QMainWindow {
   PassStorage pass_storage_;
 
   /// An interface to type a text.
-  std::unique_ptr<KeyboardInterface> keyboard_;
+  KeyboardTyping keyboard_;
 
   /// QT system tray icon. Simple as that.
   QSystemTrayIcon *systray_icon_;
@@ -42,6 +43,9 @@ class MainWindow : public QMainWindow {
 
   /// Path of a passwords storage.
   QString passwords_path_;
+
+  /// Hotkey setter.
+  HotkeySetter hotkey_setter_;
 
   WaitDialog *wait_dialog_;
 

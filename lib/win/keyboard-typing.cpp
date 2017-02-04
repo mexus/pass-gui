@@ -1,4 +1,4 @@
-#include "windows-keyboard.h"
+#include <lib/keyboard-typing.h>
 
 #include <exception>
 #include <memory>
@@ -67,7 +67,9 @@ static std::vector<DWORD> StringToUtf16(const QString &string) {
   return result;
 }
 
-void WindowsKeyboard::TypeString(const QString &string) {
+KeyboardTyping::~KeyboardTyping() {}
+
+void KeyboardTyping::TypeString(const QString &string) {
   std::vector<DWORD> utf16_string = StringToUtf16(string);
 
   for (DWORD &symbol : utf16_string) {
