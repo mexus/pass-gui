@@ -1,4 +1,4 @@
-#include "encryptiongpg.h"
+#include <lib/encryptiongpg.h>
 
 #include <QProcess>
 

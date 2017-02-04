@@ -1,7 +1,7 @@
 #ifndef WINDOWSKEYBOARD_H
 #define WINDOWSKEYBOARD_H
 
-#include "keyboard-interface.h"
+#include <lib/keyboard-interface.h>
 
 class WindowsKeyboard : public KeyboardInterface {
  public:

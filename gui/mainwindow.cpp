@@ -13,7 +13,7 @@
 #include <Windows.h>
 #endif
 
-#include "windows-keyboard.h"
+#include <lib/win/windows-keyboard.h>
 
 enum HotKeyId : int {
   kBringUp = 0xE3,

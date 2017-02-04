@@ -8,10 +8,10 @@
 #include <QMainWindow>
 #include <QSystemTrayIcon>
 
-#include <encryptiongpg.h>
-#include <keyboard-interface.h>
-#include <pass-storage.h>
-#include <wait-dialog.h>
+#include <gui/wait-dialog.h>
+#include <lib/encryptiongpg.h>
+#include <lib/keyboard-interface.h>
+#include <lib/pass-storage.h>
 
 namespace Ui {
 class MainWindow;
