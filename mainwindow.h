@@ -3,12 +3,15 @@
 
 #include <memory>
 
+#include <QFuture>
+#include <QFutureWatcher>
 #include <QMainWindow>
 #include <QSystemTrayIcon>
 
 #include <encryptiongpg.h>
 #include <keyboard-interface.h>
 #include <pass-storage.h>
+#include <wait-dialog.h>
 
 namespace Ui {
 class MainWindow;
@@ -39,6 +42,11 @@ class MainWindow : public QMainWindow {
 
   /// Path of a passwords storage.
   QString passwords_path_;
+
+  WaitDialog *wait_dialog_;
+
+  QFuture<std::shared_ptr<GpgDecryptionResult>> password_future_;
+  QFutureWatcher<std::shared_ptr<GpgDecryptionResult>> password_future_watcher_;
 
   /// Apply the current filter string to the password tree.
   void UpdateFiltering(const QString &filter);
@@ -85,6 +93,9 @@ class MainWindow : public QMainWindow {
 
   /// Asks a user to give a new password storage path.
   void ChangeStoragePath();
+
+  /// Types a password.
+  void TypePassword();
 };
 
 #endif  // MAINWINDOW_H

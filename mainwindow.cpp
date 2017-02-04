@@ -7,28 +7,19 @@
 #include <QKeyEvent>
 #include <QMessageBox>
 #include <QSettings>
+#include <QtConcurrent>
 
 #if defined(_WIN64) || defined(_WIN32)
 #include <Windows.h>
 #endif
 
-#include "wait-dialog.h"
 #include "windows-keyboard.h"
 
-enum HotKeyId : int { kBringUp = 0xE3 };
+enum HotKeyId : int {
+  kBringUp = 0xE3,
+};
 
 static const QString kSettingsFieldPasswordsPath = "passwords_path";
-
-static void OverwriteQString(QString *str) {
-  int size = str->size();
-#if defined(_WIN64) || defined(_WIN32)
-  SecureZeroMemory(reinterpret_cast<void *>(str->data()), size * sizeof(QChar));
-#else
-  for (int i = 0; i != size; ++i) {
-    str[i] = '1';
-  }
-#endif
-}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
@@ -36,7 +27,8 @@ MainWindow::MainWindow(QWidget *parent)
       pass_storage_(),
       keyboard_(new WindowsKeyboard()),
       systray_icon_(new QSystemTrayIcon(QIcon(":/gui/lock-logo.svg"), this)),
-      quit_action_(new QAction("Quit", this)) {
+      quit_action_(new QAction("Quit", this)),
+      wait_dialog_(new WaitDialog(this)) {
   ui->setupUi(this);
 
   QSettings settings;
@@ -57,6 +49,9 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->actionReload, &QAction::triggered, this, &MainWindow::ReloadTree);
   connect(ui->action_path_select, &QAction::triggered, this,
           &MainWindow::ChangeStoragePath);
+  connect(&password_future_watcher_,
+          &QFutureWatcher<std::shared_ptr<GpgDecryptionResult>>::finished, this,
+          &MainWindow::TypePassword);
 
   // Handle key events for components:
   ui->filter_line->installEventFilter(this);
@@ -119,7 +114,7 @@ void MainWindow::changeEvent(QEvent *e) {
   if (windowState() == Qt::WindowMinimized) {
     hide();
   }
-}
+}  //
 
 bool MainWindow::FilterLineKeyEventFilter(QKeyEvent *event) {
   if (ui->results_list->count() == 0) {
@@ -264,23 +259,38 @@ void MainWindow::TypeCurrentPassword() {
   QString name = item->text();
   QString file_name = pass_storage_.GetFileName(name);
 
-  QString password;
-  try {
-    WaitDialog dialog(this, "Waiting for GPG");
-    dialog.open();
-    password = GpgDecryptFileFirstLine(file_name);
-    dialog.close();
-    hide();
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    keyboard_->TypeString(password);
-    OverwriteQString(&password);
-    systray_icon_->showMessage("Password typed", "For " + name);
-  } catch (const std::exception &e) {
-    OverwriteQString(&password);
-    show();
-    QMessageBox::warning(nullptr, "Can't get a password:\n", e.what());
+  wait_dialog_->ShowDialog("Waiting for GPG");
+  password_future_ =
+      QtConcurrent::run(&GpgDecryptFileFirstLine, name, file_name);
+  password_future_watcher_.setFuture(password_future_);
+}
+
+void MainWindow::TypePassword() {
+  wait_dialog_->close();
+  auto result = password_future_watcher_.result();
+  if (!result) {
+    QMessageBox::critical(
+        this, "Unknown",
+        "Please contact the developers: " __FILE__ + QString::number(__LINE__));
     return;
   }
+  QString name = result->GetName();
+  if (auto error = std::dynamic_pointer_cast<GpgDecryptionError>(result)) {
+    QMessageBox::critical(this, "GPG failed for " + name, error->GetError());
+    return;
+  }
+  auto success = std::dynamic_pointer_cast<GpgDecryptionSuccess>(result);
+  if (!success) {
+    QMessageBox::critical(
+        this, "Unknown",
+        "Please contact the developers: " __FILE__ + QString::number(__LINE__));
+    return;
+  }
+  hide();
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  keyboard_->TypeString(success->GetResult());
+  systray_icon_->showMessage("Password typed", name);
+  success->ClearResult();
 }
 
 void MainWindow::InitTrayIconContextMenu() {

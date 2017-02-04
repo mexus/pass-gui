@@ -9,6 +9,20 @@
 
 #include <QTextCodec>
 
+static void Overwrite(QByteArray *str) {
+  int size = str->size();
+  SecureZeroMemory(reinterpret_cast<void *>(str->data()), size * sizeof(char));
+}
+
+static void Overwrite(std::vector<DWORD> *str) {
+  size_t size = str->size();
+  SecureZeroMemory(reinterpret_cast<void *>(str->data()), size * sizeof(DWORD));
+}
+
+static void Overwrite(DWORD *symbol) {
+  SecureZeroMemory(reinterpret_cast<void *>(symbol), sizeof(DWORD));
+}
+
 static INPUT InputFromSymbol(DWORD symbol) {
   INPUT input = {};
   input.type = INPUT_KEYBOARD;
@@ -49,14 +63,17 @@ static std::vector<DWORD> StringToUtf16(const QString &string) {
     DWORD second = utf16_array[2 * i + 1];
     result.push_back((second << 8) + first);
   }
+  Overwrite(&utf16_array);
   return result;
 }
 
 void WindowsKeyboard::TypeString(const QString &string) {
   std::vector<DWORD> utf16_string = StringToUtf16(string);
 
-  for (DWORD symbol : utf16_string) {
+  for (DWORD &symbol : utf16_string) {
     TypeCharacter(symbol);
     TypeCharacter(symbol, KEYEVENTF_KEYUP);
+    Overwrite(&symbol);
   }
+  Overwrite(&utf16_string);
 }
