@@ -190,7 +190,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 bool MainWindow::SureToExit() {
   QMessageBox::StandardButton reply = QMessageBox::question(
       this, QApplication::applicationName(), "Are you sure you want to exit?",
-      QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+      QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
   return reply == QMessageBox::Yes;
 }
 
