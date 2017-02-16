@@ -76,3 +76,5 @@ std::vector<QString> PassStorage::GetItems(const QString &filter) const {
 QString PassStorage::GetFileName(const QString &item) const {
   return starting_path_ + item + kGpgSuffix;
 }
+
+bool PassStorage::IsEmpty() const { return all_items_.empty(); }

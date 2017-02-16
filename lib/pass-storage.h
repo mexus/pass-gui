@@ -30,6 +30,8 @@ class PassStorage {
 
   static bool FuzzyMatch(const QString &str, const QString &filter);
 
+  bool IsEmpty() const;
+
  private:
   QString starting_path_;
   std::vector<QString> all_items_;

@@ -85,11 +85,19 @@ void MainWindow::Activate() {
 MainWindow::~MainWindow() { delete ui; }
 
 void MainWindow::UpdateFiltering(const QString &filter) {
+  if (pass_storage_.IsEmpty()) {
+    ui->filter_line->setEnabled(false);
+    ui->results_list->setEnabled(false);
+    return;
+  }
+  ui->filter_line->setEnabled(true);
   ui->results_list->clear();
   auto items = pass_storage_.GetItems(filter);
   if (items.empty()) {
+    ui->results_list->setEnabled(false);
     return;
   }
+  ui->results_list->setEnabled(true);
   for (const QString &item : items) {
     ui->results_list->addItem(item);
   }
@@ -198,6 +206,7 @@ int MainWindow::ReloadTree() {
   if (passwords_path_.isEmpty()) {
     QMessageBox::information(this, "No storage path",
                              "Please select a password storage path.");
+    UpdateFiltering("");
     return -1;
   }
   try {
@@ -207,6 +216,7 @@ int MainWindow::ReloadTree() {
     return 0;
   } catch (const std::exception &e) {
     QMessageBox::warning(this, "Can't load the passwords tree:\n", e.what());
+    UpdateFiltering("");
     return -1;
   }
 }
