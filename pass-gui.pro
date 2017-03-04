@@ -26,8 +26,6 @@ HEADERS +=  \
 
 FORMS += gui/mainwindow.ui
 
-LIBS += -luser32
-
 DISTFILES += gui/lock-logo.svg
 
 win32 {
@@ -37,6 +35,7 @@ win32 {
             lib/win/hotkey-setter.cpp
     DISTFILES += gui/lock-logo.svg.ico
     RC_ICONS = gui/lock-logo.svg.ico
+    LIBS += -luser32
 }
 
 RESOURCES += \
